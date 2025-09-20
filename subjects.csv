@@ -1,0 +1,13 @@
+subject_id,subject_name,credits,teacher,prereq_subject_id,max_enroll,current_enroll
+05501001,Programming I,3,Dr. Somchai,,-1,5
+05501002,Programming II,3,Dr. Somchai,05501001,40,3
+05501003,Data Structures,3,Dr. Nattapon,05501002,35,2
+05501004,Discrete Mathematics,3,Dr. Ratchada,,50,50
+05501005,Calculus I,3,Dr. Weerachai,,-1,4
+05501006,Calculus II,3,Dr. Weerachai,05501005,45,1
+05501007,Physics I,3,Dr. Supot,,60,2
+05501008,Physics II,3,Dr. Supot,05501007,40,1
+90690001,English I,3,Ms. Alice,,100,6
+90690002,English II,3,Ms. Alice,90690001,80,1
+90690003,Thai Civics,2,Mr. Prasert,,-1,1
+90690004,Art Appreciation,2,Ms. Nicha,,50,1

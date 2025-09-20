@@ -1,0 +1,11 @@
+student_id,title,first_name,last_name,birthdate,current_school,email
+69000001,Mr.,Anan,Phromsak,2007-03-15,Sci High A,anan01@example.com
+69000002,Ms.,Bua,Pattarawan,2006-11-02,Sci High B,bua02@example.com
+69000003,Mr.,Chai,Kitjakarn,2015-01-20,Sci High A,chai03@example.com
+69000004,Ms.,Dao,Saengchan,2007-07-05,Sci High C,dao04@example.com
+69000005,Mr.,Ek,Saelee,2006-05-28,Sci High B,ek05@example.com
+69000006,Ms.,Fon,Boonsri,2009-02-14,Sci High A,fon06@example.com
+69000007,Mr.,Gun,Thammarat,2007-09-09,Sci High D,gun07@example.com
+69000008,Ms.,Hana,Chantarat,2006-12-30,Sci High C,hana08@example.com
+69000009,Mr.,Itt,Viriyakul,2008-08-18,Sci High B,itt09@example.com
+69000010,Ms.,Jan,Manipa,2009-06-01,Sci High A,jan10@example.com
