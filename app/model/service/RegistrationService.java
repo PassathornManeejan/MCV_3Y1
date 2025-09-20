@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class RegistrationService {
-    
     private final StudentRepository students;
     private final SubjectRepository subjects;
     private final RegisteredRepository regs;
@@ -90,7 +89,8 @@ public class RegistrationService {
         return new Result(true, "Registered successfully");
     }
 
-    // Expose repositories for read operations (used by profile view)
+    // Expose repositories for profile view (read-only usage)
     public RegisteredRepository getRegisteredRepository() { return regs; }
     public SubjectRepository getSubjectRepository() { return subjects; }
+    public StudentRepository getStudentRepository() { return students; }
 }

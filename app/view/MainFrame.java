@@ -3,10 +3,13 @@ package app.view;
 import app.controller.RegisterController;
 import app.model.entity.Subject;
 import app.model.entity.Registered;
+import app.model.entity.Student;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 import java.util.Map;
 
@@ -21,9 +24,10 @@ public class MainFrame extends JFrame {
     private JButton registerBtn;
     private JLabel statusBar;
     private JTabbedPane tabs;
+    private JLabel studentHeader;
 
     public MainFrame(String username, String studentId, RegisterController controller) {
-        super("Electives Registration – " + username + " (" + studentId + ")");
+        super("Electives Registration – " + " (" + studentId + ")");
         this.studentId = studentId;
         this.controller = controller;
         initUI();
@@ -50,13 +54,14 @@ public class MainFrame extends JFrame {
         split.setResizeWeight(0.6);
 
         tabs = new JTabbedPane();
-
-        // Eligible tab
         eligibleTable = makeSubjectsTable();
+        lockedTable = makeLockedTable();
+        profileTable = makeProfileTable();
+
+        // Eligible listeners: toggle-deselect + fast detail
         eligibleTable.setToolTipText("Click to select, click again to deselect. Use Register button to confirm.");
         eligibleTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mousePressed(java.awt.event.MouseEvent e) {
+            @Override public void mousePressed(java.awt.event.MouseEvent e) {
                 int viewRow = eligibleTable.rowAtPoint(e.getPoint());
                 int selected = eligibleTable.getSelectedRow();
                 if (viewRow == selected && selected != -1) {
@@ -65,8 +70,7 @@ public class MainFrame extends JFrame {
                     detailArea.setText("");
                 }
             }
-            @Override
-            public void mouseReleased(java.awt.event.MouseEvent e) {
+            @Override public void mouseReleased(java.awt.event.MouseEvent e) {
                 int row = eligibleTable.getSelectedRow();
                 if (row >= 0) {
                     int modelRow = eligibleTable.convertRowIndexToModel(row);
@@ -80,12 +84,11 @@ public class MainFrame extends JFrame {
             }
         });
 
-        // Locked tab
-        lockedTable = makeLockedTable();
-        lockedTable.setToolTipText("Click to view details");
+        // Locked listeners: selection -> detail; toggle deselect
+        lockedTable.setToolTipText("Click to view details (click again to clear).");
+        lockedTable.getSelectionModel().addListSelectionListener(e -> onLockedSelected());
         lockedTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mousePressed(java.awt.event.MouseEvent e) {
+            @Override public void mousePressed(java.awt.event.MouseEvent e) {
                 int viewRow = lockedTable.rowAtPoint(e.getPoint());
                 int selected = lockedTable.getSelectedRow();
                 if (viewRow == selected && selected != -1) {
@@ -93,8 +96,7 @@ public class MainFrame extends JFrame {
                     detailArea.setText("");
                 }
             }
-            @Override
-            public void mouseReleased(java.awt.event.MouseEvent e) {
+            @Override public void mouseReleased(java.awt.event.MouseEvent e) {
                 int row = lockedTable.getSelectedRow();
                 if (row >= 0) {
                     int modelRow = lockedTable.convertRowIndexToModel(row);
@@ -104,11 +106,9 @@ public class MainFrame extends JFrame {
             }
         });
 
-        // Profile tab
-        profileTable = makeProfileTable();
+        // Profile toggle + selection -> detail
         profileTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mousePressed(java.awt.event.MouseEvent e) {
+            @Override public void mousePressed(java.awt.event.MouseEvent e) {
                 int viewRow = profileTable.rowAtPoint(e.getPoint());
                 int selected = profileTable.getSelectedRow();
                 if (viewRow == selected && selected != -1) {
@@ -116,20 +116,12 @@ public class MainFrame extends JFrame {
                     detailArea.setText("");
                 }
             }
-            @Override
-            public void mouseReleased(java.awt.event.MouseEvent e) {
-                int row = profileTable.getSelectedRow();
-                if (row >= 0) {
-                    int modelRow = profileTable.convertRowIndexToModel(row);
-                    String id = (String) profileTable.getModel().getValueAt(modelRow, 0);
-                    controller.getSubjectDetail(id).ifPresent(MainFrame.this::showDetail);
-                }
-            }
         });
+        profileTable.getSelectionModel().addListSelectionListener(e -> onProfileSelected());
 
         tabs.addTab("Eligible", new JScrollPane(eligibleTable));
         tabs.addTab("Locked (with reasons)", new JScrollPane(lockedTable));
-        tabs.addTab("Profile", new JScrollPane(profileTable));
+        tabs.addTab("Profile", buildProfileTab());
         split.setLeftComponent(tabs);
 
         detailArea = new JTextArea();
@@ -173,6 +165,37 @@ public class MainFrame extends JFrame {
         return table;
     }
 
+    private JComponent buildProfileTab() {
+        JPanel panel = new JPanel(new BorderLayout());
+        studentHeader = new JLabel();
+        studentHeader.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
+        panel.add(studentHeader, BorderLayout.NORTH);
+        panel.add(new JScrollPane(profileTable), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private void onLockedSelected() {
+        int row = lockedTable.getSelectedRow();
+        if (row >= 0) {
+            int modelRow = lockedTable.convertRowIndexToModel(row);
+            String id = (String) lockedTable.getModel().getValueAt(modelRow, 0);
+            controller.getSubjectDetail(id).ifPresent(this::showDetail);
+        } else {
+            detailArea.setText("");
+        }
+    }
+
+    private void onProfileSelected() {
+        int row = profileTable.getSelectedRow();
+        if (row >= 0) {
+            int modelRow = profileTable.convertRowIndexToModel(row);
+            String id = (String) profileTable.getModel().getValueAt(modelRow, 0);
+            controller.getSubjectDetail(id).ifPresent(this::showDetail);
+        } else {
+            detailArea.setText("");
+        }
+    }
+
     private void showDetail(Subject s) {
         String prereq = (s.getPrereqId()==null? "-" : s.getPrereqId());
         String text = String.format(
@@ -201,9 +224,29 @@ public class MainFrame extends JFrame {
         var res = controller.register(studentId, id);
         JOptionPane.showMessageDialog(this, res.message(), res.ok()? "Success" : "Failed",
                 res.ok()? JOptionPane.INFORMATION_MESSAGE : JOptionPane.WARNING_MESSAGE);
-        // After successful registration, show Profile tab (align with rule: go back to student's profile)
-        tabs.setSelectedIndex(2); // Profile tab
+        // After successful registration, switch to Profile tab
+        tabs.setSelectedIndex(2);
         refreshAll();
+    }
+
+    private void renderStudentHeader() {
+        var stuOpt = controller.getStudent(studentId);
+        if (stuOpt.isPresent()) {
+            Student s = stuOpt.get();
+            String ageTxt = "";
+            try {
+                int years = Period.between(s.getBirthdate(), LocalDate.now()).getYears();
+                ageTxt = " | Age: " + years;
+            } catch (Exception ex) { /* ignore */ }
+            String text = String.format("<html><b>%s %s %s</b> (ID: %s)%s"
+                            + "<br/>School: %s"
+                            + "<br/>Email: %s</html>",
+                    s.getTitle(), s.getFirstName(), s.getLastName(), s.getId(), ageTxt,
+                    s.getSchool(), s.getEmail());
+            studentHeader.setText(text);
+        } else {
+            studentHeader.setText("Student not found: " + studentId);
+        }
     }
 
     private void refreshAll() {
@@ -212,9 +255,7 @@ public class MainFrame extends JFrame {
         var m = (DefaultTableModel) eligibleTable.getModel();
         m.setRowCount(0);
         for (Subject s : eligible) {
-            m.addRow(new Object[]{
-                    s.getId(), s.getName(), s.getCredits(), s.getMaxEnroll(), s.getCurrentEnroll()
-            });
+            m.addRow(new Object[]{ s.getId(), s.getName(), s.getCredits(), s.getMaxEnroll(), s.getCurrentEnroll() });
         }
 
         // Locked
@@ -227,6 +268,7 @@ public class MainFrame extends JFrame {
         }
 
         // Profile (registered subjects)
+        renderStudentHeader();
         var pm = (DefaultTableModel) profileTable.getModel();
         pm.setRowCount(0);
         int totalCredits = 0;
